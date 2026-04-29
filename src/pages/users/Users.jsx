@@ -31,7 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MoreHorizontal, Plus, Pencil, Trash, Loader2 } from "lucide-react";
+import { MoreHorizontal, Plus, Pencil, Trash, Loader2, History } from "lucide-react";
 import { toast } from 'sonner';
 import { userService } from '@/services/userService';
 import { getFullImageUrl } from '@/lib/utils';
@@ -45,6 +45,10 @@ const Users = () => {
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [isTxOpen, setIsTxOpen] = useState(false);
+    const [txUser, setTxUser] = useState(null);
+    const [txHistory, setTxHistory] = useState([]);
+    const [txLoading, setTxLoading] = useState(false);
     const [formData, setFormData] = useState({
         full_name: '',
         mobile_number: '',
@@ -213,6 +217,21 @@ const Users = () => {
         }
     };
 
+    const openTxHistory = async (user) => {
+        setTxUser(user);
+        setTxHistory([]);
+        setIsTxOpen(true);
+        setTxLoading(true);
+        try {
+            const res = await userService.getWalletHistory(user.user_id);
+            setTxHistory(res.data?.history || []);
+        } catch {
+            toast.error('Failed to load transaction history');
+        } finally {
+            setTxLoading(false);
+        }
+    };
+
     const getInitials = (name) => {
         if (!name) return 'U';
         return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -298,6 +317,21 @@ const Users = () => {
                 <div className="text-sm font-medium">
                     {row.original.wallet?.balance || 0} {row.original.wallet?.currency || 'USD'}
                 </div>
+            ),
+        },
+        {
+            id: "tx_history",
+            header: "Transaction History",
+            cell: ({ row }) => (
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs gap-1"
+                    onClick={() => openTxHistory(row.original)}
+                >
+                    <History className="h-3 w-3" />
+                    History
+                </Button>
             ),
         },
         {
@@ -427,6 +461,66 @@ const Users = () => {
                 searchKey="full_name"
                 searchPlaceholder="Search users..."
             />
+
+            {/* Transaction History Dialog */}
+            <Dialog open={isTxOpen} onOpenChange={setIsTxOpen}>
+                <DialogContent className="max-w-6xl w-[95vw] max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Transaction History</DialogTitle>
+                        <DialogDescription>
+                            Wallet history for {txUser?.full_name} ({txUser?.user_id})
+                        </DialogDescription>
+                    </DialogHeader>
+                    {txLoading ? (
+                        <div className="flex items-center justify-center h-40">
+                            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                        </div>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-b bg-muted/50">
+                                        <th className="text-left px-3 py-2 font-medium">#</th>
+                                        <th className="text-left px-3 py-2 font-medium">Summary</th>
+                                        <th className="text-left px-3 py-2 font-medium">Type</th>
+                                        <th className="text-right px-3 py-2 font-medium">Amount</th>
+                                        <th className="text-right px-3 py-2 font-medium">Balance Before</th>
+                                        <th className="text-right px-3 py-2 font-medium">Balance After</th>
+                                        <th className="text-left px-3 py-2 font-medium">Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {txHistory.length === 0 ? (
+                                        <tr><td colSpan={7} className="text-center py-8 text-muted-foreground">No transactions found</td></tr>
+                                    ) : txHistory.map((tx, i) => (
+                                        <tr key={tx.id} className="border-b hover:bg-muted/30 transition-colors">
+                                            <td className="px-3 py-2 text-muted-foreground">{i + 1}</td>
+                                            <td className="px-3 py-2 capitalize">{tx.summary}</td>
+                                            <td className="px-3 py-2">
+                                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${
+                                                    tx.transaction_type === 'credit'
+                                                        ? 'bg-green-100 text-green-700'
+                                                        : 'bg-red-100 text-red-600'
+                                                }`}>
+                                                    {tx.transaction_type}
+                                                </span>
+                                            </td>
+                                            <td className={`px-3 py-2 text-right font-mono font-medium ${
+                                                tx.transaction_type === 'credit' ? 'text-green-600' : 'text-red-500'
+                                            }`}>
+                                                {Number(tx.amount).toLocaleString()}
+                                            </td>
+                                            <td className="px-3 py-2 text-right font-mono text-muted-foreground">{Number(tx.balance_before).toLocaleString()}</td>
+                                            <td className="px-3 py-2 text-right font-mono text-muted-foreground">{Number(tx.balance_after).toLocaleString()}</td>
+                                            <td className="px-3 py-2 whitespace-nowrap text-muted-foreground">{tx.created_at_ist}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
 
             {/* Add User Dialog */}
             <Dialog open={isAddOpen} onOpenChange={(open) => {

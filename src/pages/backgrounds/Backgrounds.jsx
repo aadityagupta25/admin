@@ -69,7 +69,7 @@ const Backgrounds = () => {
 
     const openEditDialog = (item) => {
         setSelected(item);
-        setEditForm({ screen_name: item.screen_name || '' });
+        setEditForm({ screen_name: item.screen_name || 'Room Chat background' });
         setEditImage(null);
         setIsEditOpen(true);
     };
@@ -237,7 +237,7 @@ const Backgrounds = () => {
                         <div className="grid gap-4 py-4">
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="screen_name" className="text-right">Screen Name</Label>
-                                <Input id="screen_name" name="screen_name" placeholder="home" className="col-span-3" required />
+                                <Input id="screen_name" name="screen_name" defaultValue="Room Chat background" className="col-span-3 bg-muted" readOnly required />
                             </div>
                             <div className="grid grid-cols-4 items-start gap-4">
                                 <Label className="text-right pt-2">Image</Label>
@@ -286,9 +286,8 @@ const Backgrounds = () => {
                                 <Label className="text-right">Screen Name</Label>
                                 <Input
                                     value={editForm.screen_name}
-                                    onChange={(e) => setEditForm(prev => ({ ...prev, screen_name: e.target.value }))}
-                                    className="col-span-3"
-                                    required
+                                    className="col-span-3 bg-muted"
+                                    readOnly
                                 />
                             </div>
                             <div className="grid grid-cols-4 items-start gap-4">

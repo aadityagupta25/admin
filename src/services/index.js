@@ -5,4 +5,5 @@ export { default as backgroundService } from './backgroundService';
 export { default as partyService } from './partyService';
 export { default as soundEffectService } from './soundEffectService';
 export { default as feedService } from './feedService';
+export { default as batchLevelService } from './batchLevelService';
 export { apiService } from './api';

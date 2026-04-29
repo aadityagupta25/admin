@@ -26,7 +26,9 @@ const GiftCatalog = () => {
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [selected, setSelected] = useState(null);
-    const [editForm, setEditForm] = useState({ category: '', cost: '' });
+    const [editForm, setEditForm] = useState({ category: 'Hot', cost: '' });
+
+    const CATEGORIES = ['Hot', 'Lucky', 'Baggage', 'Atlas', 'Store'];
     const [addImage, setAddImage] = useState(null);
     const [editImage, setEditImage] = useState(null);
 
@@ -237,7 +239,9 @@ const GiftCatalog = () => {
                         <div className="grid gap-4 py-4">
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="category" className="text-right">Category</Label>
-                                <Input id="category" name="category" placeholder="e.g. Flowers" className="col-span-3" required />
+                                <select name="category" defaultValue="Hot" className="col-span-3 h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring" required>
+                                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="cost" className="text-right">Cost</Label>
@@ -288,12 +292,13 @@ const GiftCatalog = () => {
                         <div className="grid gap-4 py-4">
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label className="text-right">Category</Label>
-                                <Input
+                                <select
                                     value={editForm.category}
                                     onChange={(e) => setEditForm(prev => ({ ...prev, category: e.target.value }))}
-                                    className="col-span-3"
-                                    required
-                                />
+                                    className="col-span-3 h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                                >
+                                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label className="text-right">Cost</Label>

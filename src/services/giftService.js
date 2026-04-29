@@ -18,7 +18,7 @@ export const giftService = {
         form.append('category', data.category);
         form.append('cost', data.cost);
         if (data.icon_image) form.append('icon_image', data.icon_image);
-        form.append('status', data.status ?? 1);
+        form.append('status', (data.status ?? 1) ? 'true' : 'false');
         return await apiService.upload(BASE, form);
     },
 
@@ -27,7 +27,7 @@ export const giftService = {
         if (data.category !== undefined) form.append('category', data.category);
         if (data.cost !== undefined) form.append('cost', data.cost);
         if (data.icon_image instanceof File) form.append('icon_image', data.icon_image);
-        if (data.status !== undefined) form.append('status', data.status);
+        if (data.status !== undefined) form.append('status', data.status ? 'true' : 'false');
         return await apiService.put(`${BASE}/${id}`, form, {
             headers: { 'Content-Type': 'multipart/form-data' },
         });

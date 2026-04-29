@@ -88,6 +88,16 @@ export const userService = {
         });
     },
 
+    // Get wallet transaction history
+    getWalletHistory: async (userId) => {
+        return await apiService.get(`${USERS_ENDPOINT}/wallet-history/${userId}`);
+    },
+
+    // Get wallet transaction history
+    getWalletHistory: async (userId) => {
+        return await apiService.get(`${USERS_ENDPOINT}/wallet-history/${userId}`);
+    },
+
     // Delete user (soft delete)
     delete: async (userId) => {
         return await apiService.delete(`${USERS_ENDPOINT}/${userId}`);

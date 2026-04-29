@@ -34,7 +34,7 @@ async function getCroppedBlob(image, crop, fileName) {
     });
 }
 
-const ImageCropper = ({ aspect = 16 / 9, onCropped, children }) => {
+const ImageCropper = ({ aspect = 1, onCropped, children }) => {
     const [srcUrl, setSrcUrl] = useState(null);
     const [crop, setCrop] = useState();
     const [completedCrop, setCompletedCrop] = useState(null);
@@ -46,6 +46,12 @@ const ImageCropper = ({ aspect = 16 / 9, onCropped, children }) => {
     const onSelectFile = (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
+        // SVGs are vector — skip crop dialog, pass through directly
+        if (file.type === 'image/svg+xml') {
+            onCropped(file);
+            e.target.value = '';
+            return;
+        }
         setFileName(file.name);
         const reader = new FileReader();
         reader.onload = () => {
