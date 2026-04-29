@@ -12,7 +12,8 @@ import {
     ChevronRight,
     Settings,
     HelpCircle,
-    Wallpaper
+    Wallpaper,
+    Trophy
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -26,6 +27,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         { name: 'Feeds', path: '/feeds', icon: Rss },
         { name: 'Party', path: '/party', icon: PartyPopper },
         { name: 'Sound Effects', path: '/sound-effect', icon: Music },
+        { name: 'Batch Levels', path: '/batch-levels', icon: Trophy },
     ];
 
     const bottomItems = [

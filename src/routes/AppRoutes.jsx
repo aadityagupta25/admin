@@ -11,6 +11,7 @@ import Feeds from '../pages/feeds/FeedsNew'
 import Party from '../pages/party/Party'
 import SoundEffect from '../pages/soundEffect/SoundEffect'
 import GiftCatalog from '../pages/gifts/GiftCatalog'
+import BatchLevels from '../pages/batchLevels/BatchLevels'
 import Settings from '../pages/settings/Settings'
 import Profile from '../pages/profile/Profile'
 import ProtectedRoute from './ProtectedRoute'
@@ -34,6 +35,7 @@ function AppRoutes() {
           <Route path="party" element={<Party />} />
           <Route path="sound-effect" element={<SoundEffect />} />
           <Route path="gifts" element={<GiftCatalog />} />
+          <Route path="batch-levels" element={<BatchLevels />} />
           <Route path="settings" element={<Settings />} />
           <Route path="profile" element={<Profile />} />
         </Route>
