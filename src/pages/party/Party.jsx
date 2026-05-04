@@ -159,11 +159,13 @@ const Party = () => {
 
   const columns = [
     {
-      accessorKey: "id",
-      header: "ID",
+      id: "sno",
+      header: "S.No",
       cell: ({ row }) => (
-        <div className="font-mono text-sm">{row.original.id}</div>
+        <div className="text-sm font-medium">{row.index + 1}</div>
       ),
+      enableSorting: false,
+      enableHiding: false,
     },
     {
       accessorKey: "party_id",

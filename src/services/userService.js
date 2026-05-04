@@ -59,7 +59,7 @@ export const userService = {
     },
 
     // Update user
-    update: async (userId, userData) => {
+    update: async (userUid, userData) => {
         const formData = new FormData();
 
         Object.keys(userData).forEach(key => {
@@ -74,18 +74,14 @@ export const userService = {
             }
         });
 
-        return await apiService.put(`${USERS_ENDPOINT}/${userId}`, formData, {
+        return await apiService.put(`${USERS_ENDPOINT}/${userUid}`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
         });
     },
 
     // Toggle user status (active/inactive)
-    toggleStatus: async (userId, status) => {
-        const formData = new FormData();
-        formData.append('status', status);
-        return await apiService.put(`${USERS_ENDPOINT}/${userId}`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-        });
+    toggleStatus: async (userUid, status) => {
+        return await apiService.put(`${USERS_ENDPOINT}/${userUid}`, { status: status === 1 || status === true });
     },
 
     // Get wallet transaction history
@@ -99,8 +95,8 @@ export const userService = {
     },
 
     // Delete user (soft delete)
-    delete: async (userId) => {
-        return await apiService.delete(`${USERS_ENDPOINT}/${userId}`);
+    delete: async (userUid) => {
+        return await apiService.delete(`${USERS_ENDPOINT}/${userUid}`);
     },
 };
 

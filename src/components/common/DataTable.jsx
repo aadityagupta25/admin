@@ -25,22 +25,35 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown, Search } from "lucide-react";
 
+const globalFilterFn = (row, columnId, filterValue) => {
+    const search = filterValue.toLowerCase();
+    return Object.values(row.original).some((val) => {
+        if (val === null || val === undefined) return false;
+        if (typeof val === 'object') return false;
+        return String(val).toLowerCase().includes(search);
+    });
+};
+
 export function DataTable({
     columns,
     data,
     searchKey,
+    searchPlaceholder,
     navActions
 }) {
     const [sorting, setSorting] = useState([]);
     const [columnFilters, setColumnFilters] = useState([]);
+    const [globalFilter, setGlobalFilter] = useState('');
     const [columnVisibility, setColumnVisibility] = useState({});
     const [rowSelection, setRowSelection] = useState({});
 
     const table = useReactTable({
         data,
         columns,
+        globalFilterFn: globalFilterFn,
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
+        onGlobalFilterChange: setGlobalFilter,
         getCoreRowModel: getCoreRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
         getSortedRowModel: getSortedRowModel(),
@@ -50,6 +63,7 @@ export function DataTable({
         state: {
             sorting,
             columnFilters,
+            globalFilter,
             columnVisibility,
             rowSelection,
         },
@@ -62,11 +76,9 @@ export function DataTable({
                     <div className="relative">
                         <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
-                            placeholder={`Search...`}
-                            value={(table.getColumn(searchKey)?.getFilterValue()) ?? ""}
-                            onChange={(event) =>
-                                table.getColumn(searchKey)?.setFilterValue(event.target.value)
-                            }
+                            placeholder={searchPlaceholder ?? `Search...`}
+                            value={globalFilter}
+                            onChange={(e) => setGlobalFilter(e.target.value)}
                             className="pl-8 max-w-sm"
                         />
                     </div>
@@ -153,12 +165,26 @@ export function DataTable({
                     </TableBody>
                 </Table>
             </div>
-            <div className="flex items-center justify-end space-x-2 py-4">
-                <div className="flex-1 text-sm text-muted-foreground">
-                    {table.getFilteredSelectedRowModel().rows.length} of{" "}
-                    {table.getFilteredRowModel().rows.length} row(s) selected.
+            <div className="flex items-center justify-between py-4">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>Rows per page:</span>
+                    <select
+                        value={table.getState().pagination.pageSize}
+                        onChange={(e) => table.setPageSize(Number(e.target.value))}
+                        className="h-8 rounded-md border border-input bg-background px-2 text-sm"
+                    >
+                        {[10, 25, 50, 100].map((size) => (
+                            <option key={size} value={size}>{size}</option>
+                        ))}
+                    </select>
+                    <span className="ml-2">
+                        {table.getFilteredRowModel().rows.length} total rows
+                    </span>
                 </div>
-                <div className="space-x-2">
+                <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">
+                        Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+                    </span>
                     <Button
                         variant="outline"
                         size="sm"

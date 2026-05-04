@@ -125,7 +125,7 @@ const Users = () => {
 
         try {
             setIsSaving(true);
-            const response = await userService.update(selectedUser.id, formData);
+            const response = await userService.update(selectedUser.user_id, formData);
             
             if (response.success) {
                 toast.success(response.message || "User updated successfully");
@@ -143,8 +143,8 @@ const Users = () => {
 
     const handleDelete = async () => {
         try {
-            await userService.delete(selectedUser.id);
-            setData(data.filter(item => item.id !== selectedUser.id));
+            await userService.delete(selectedUser.user_id);
+            setData(data.filter(item => item.user_id !== selectedUser.user_id));
             setIsDeleteOpen(false);
             toast.success("User deleted successfully");
         } catch (error) {
@@ -205,13 +205,13 @@ const Users = () => {
     const handleToggleStatus = async (user) => {
         const newStatus = user.status === 1 ? 0 : 1;
         // Optimistic update
-        setData(prev => prev.map(item => item.id === user.id ? { ...item, status: newStatus } : item));
+        setData(prev => prev.map(item => item.user_id === user.user_id ? { ...item, status: newStatus } : item));
         try {
-            await userService.toggleStatus(user.id, newStatus);
+            await userService.toggleStatus(user.user_id, newStatus);
             toast.success(`User ${newStatus === 1 ? 'activated' : 'deactivated'} successfully`);
         } catch (error) {
             // Revert on failure
-            setData(prev => prev.map(item => item.id === user.id ? { ...item, status: user.status } : item));
+            setData(prev => prev.map(item => item.user_id === user.user_id ? { ...item, status: user.status } : item));
             console.error('Error updating user status:', error);
             toast.error('Failed to update user status');
         }
@@ -315,7 +315,7 @@ const Users = () => {
             header: "Wallet Balance",
             cell: ({ row }) => (
                 <div className="text-sm font-medium">
-                    {row.original.wallet?.balance || 0} {row.original.wallet?.currency || 'USD'}
+                    {row.original.wallet?.balance || 0}
                 </div>
             ),
         },
@@ -464,7 +464,7 @@ const Users = () => {
 
             {/* Transaction History Dialog */}
             <Dialog open={isTxOpen} onOpenChange={setIsTxOpen}>
-                <DialogContent className="max-w-6xl w-[95vw] max-h-[90vh] overflow-y-auto">
+                <DialogContent className="!max-w-4xl w-full max-h-[85vh] flex flex-col overflow-hidden">
                     <DialogHeader>
                         <DialogTitle>Transaction History</DialogTitle>
                         <DialogDescription>
@@ -476,7 +476,7 @@ const Users = () => {
                             <Loader2 className="h-6 w-6 animate-spin text-primary" />
                         </div>
                     ) : (
-                        <div className="overflow-x-auto">
+                        <div className="flex-1 overflow-auto">
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="border-b bg-muted/50">

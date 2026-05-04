@@ -11,10 +11,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Pencil, Trash, Loader2, RefreshCw, ImageIcon } from "lucide-react";
+import { Plus, Pencil, Trash, Loader2, RefreshCw, Eye } from "lucide-react";
 import { toast } from 'sonner';
 import { giftService } from '@/services/giftService';
-import ImageCropper from '@/components/common/ImageCropper';
+import SvgaPlayer from '@/components/common/SvgaPlayer';
 
 const BASE_URL = 'https://api.pololive.cloud';
 
@@ -31,6 +31,8 @@ const GiftCatalog = () => {
     const CATEGORIES = ['Hot', 'Lucky', 'Baggage', 'Atlas', 'Store'];
     const [addImage, setAddImage] = useState(null);
     const [editImage, setEditImage] = useState(null);
+    const [isViewOpen, setIsViewOpen] = useState(false);
+    const [viewItem, setViewItem] = useState(null);
 
     useEffect(() => { fetchItems(); }, []);
 
@@ -134,16 +136,23 @@ const GiftCatalog = () => {
         {
             accessorKey: "icon_image",
             header: "Icon",
-            cell: ({ row }) => (
-                <div className="w-12 h-12 rounded-md overflow-hidden bg-muted">
-                    <img
-                        src={`${BASE_URL}${row.original.icon_image}`}
-                        alt={row.original.category}
-                        className="w-full h-full object-cover"
-                        onError={(e) => { e.target.src = 'https://placehold.co/100x100?text=Gift'; }}
-                    />
-                </div>
-            ),
+            cell: ({ row }) => {
+                const path = row.original.icon_image || '';
+                const ext = path.split('.').pop().toLowerCase();
+                const isSvga = ext === 'svga';
+                const isImage = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'].includes(ext);
+                if (isSvga) {
+                    return <SvgaPlayer url={`${BASE_URL}${path}`} width={48} height={48} />;
+                }
+                if (isImage) {
+                    return (
+                        <div style={{ width: 48, height: 48, borderRadius: 8, overflow: 'hidden', background: '#f3f4f6', border: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 4 }}>
+                            <img src={`${BASE_URL}${path}`} alt={row.original.category} style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={(e) => { e.target.src = 'https://placehold.co/100x100?text=Gift'; }} />
+                        </div>
+                    );
+                }
+                return <div style={{ width: 48, height: 48, borderRadius: 8, background: '#f3f4f6', border: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ImageIcon className="h-5 w-5 text-muted-foreground" /></div>;
+            },
         },
         {
             accessorKey: "category",
@@ -183,6 +192,14 @@ const GiftCatalog = () => {
                 const item = row.original;
                 return (
                     <div className="flex items-center gap-2">
+                        <Button
+                            variant="ghost" size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-blue-600"
+                            onClick={() => { setViewItem(item); setIsViewOpen(true); }}
+                            title="View Details"
+                        >
+                            <Eye className="h-4 w-4" />
+                        </Button>
                         <Button
                             variant="ghost" size="icon"
                             className="h-8 w-8 text-muted-foreground hover:text-primary"
@@ -250,22 +267,21 @@ const GiftCatalog = () => {
                             <div className="grid grid-cols-4 items-start gap-4">
                                 <Label className="text-right pt-2">Icon</Label>
                                 <div className="col-span-3 space-y-2">
-                                    <ImageCropper aspect={1} onCropped={(file) => setAddImage(file)}>
-                                        <div className={`w-full h-32 rounded-md border-2 border-dashed flex flex-col items-center justify-center gap-1 transition-colors overflow-hidden ${
-                                            addImage ? 'border-primary' : 'border-muted-foreground/30 hover:border-primary'
-                                        }`}>
-                                            {addImage ? (
-                                                <img src={URL.createObjectURL(addImage)} className="w-full h-full object-cover" alt="preview" />
-                                            ) : (
-                                                <>
-                                                    <ImageIcon className="h-6 w-6 text-muted-foreground" />
-                                                    <span className="text-xs text-muted-foreground">Click to select &amp; crop</span>
-                                                </>
-                                            )}
-                                        </div>
-                                    </ImageCropper>
                                     {addImage && (
-                                        <button type="button" onClick={() => setAddImage(null)} className="text-xs text-destructive hover:underline">Remove image</button>
+                                        <div className="flex justify-center">
+                                            <div className="w-24 h-24 rounded-lg border overflow-hidden bg-muted flex items-center justify-center">
+                                                <img src={URL.createObjectURL(addImage)} className="w-full h-full object-contain" alt="preview" />
+                                            </div>
+                                        </div>
+                                    )}
+                                    <Input
+                                        type="file"
+                                        accept="image/*,.svga"
+                                        onChange={(e) => setAddImage(e.target.files?.[0] || null)}
+                                        required
+                                    />
+                                    {addImage && (
+                                        <button type="button" onClick={() => setAddImage(null)} className="text-xs text-destructive hover:underline">Remove</button>
                                     )}
                                 </div>
                             </div>
@@ -313,19 +329,32 @@ const GiftCatalog = () => {
                             <div className="grid grid-cols-4 items-start gap-4">
                                 <Label className="text-right pt-2">Icon</Label>
                                 <div className="col-span-3 space-y-2">
-                                    <ImageCropper aspect={1} onCropped={(file) => setEditImage(file)}>
-                                        <div className="w-full h-32 rounded-md border-2 border-dashed border-muted-foreground/30 hover:border-primary overflow-hidden cursor-pointer relative group">
-                                            <img
-                                                src={editImage ? URL.createObjectURL(editImage) : `${BASE_URL}${selected?.icon_image}`}
-                                                alt="icon"
-                                                className="w-full h-full object-cover"
-                                                onError={(e) => { e.target.src = 'https://placehold.co/100x100?text=Gift'; }}
-                                            />
-                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                                <span className="text-white text-xs font-medium">Click to replace &amp; crop</span>
-                                            </div>
-                                        </div>
-                                    </ImageCropper>
+                                    <div className="flex justify-center">
+                                        {(() => {
+                                            const path = selected?.icon_image || '';
+                                            const ext = path.split('.').pop().toLowerCase();
+                                            if (editImage) {
+                                                return (
+                                                    <div className="w-24 h-24 rounded-lg border overflow-hidden bg-muted flex items-center justify-center">
+                                                        <img src={URL.createObjectURL(editImage)} className="w-full h-full object-contain" alt="new icon" />
+                                                    </div>
+                                                );
+                                            }
+                                            if (ext === 'svga') {
+                                                return <SvgaPlayer url={`${BASE_URL}${path}`} width={96} height={96} />;
+                                            }
+                                            return (
+                                                <div className="w-24 h-24 rounded-lg border overflow-hidden bg-muted flex items-center justify-center">
+                                                    <img src={`${BASE_URL}${path}`} className="w-full h-full object-contain" alt="icon" onError={(e) => { e.target.src = 'https://placehold.co/100x100?text=Gift'; }} />
+                                                </div>
+                                            );
+                                        })()}
+                                    </div>
+                                    <Input
+                                        type="file"
+                                        accept="image/*,.svga"
+                                        onChange={(e) => setEditImage(e.target.files?.[0] || null)}
+                                    />
                                     {editImage && (
                                         <button type="button" onClick={() => setEditImage(null)} className="text-xs text-destructive hover:underline">Revert to original</button>
                                     )}
@@ -340,6 +369,62 @@ const GiftCatalog = () => {
                             </Button>
                         </DialogFooter>
                     </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* View Detail Dialog */}
+            <Dialog open={isViewOpen} onOpenChange={(v) => { setIsViewOpen(v); if (!v) setViewItem(null); }}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Gift Item Details</DialogTitle>
+                        <DialogDescription>Full details for this gift item.</DialogDescription>
+                    </DialogHeader>
+                    {viewItem && (
+                        <div className="space-y-4 py-2">
+                            {/* SVGA / Image Preview */}
+                            <div className="flex justify-center">
+                                {(() => {
+                                    const path = viewItem.icon_image || '';
+                                    const ext = path.split('.').pop().toLowerCase();
+                                    if (ext === 'svga') {
+                                        return <SvgaPlayer url={`${BASE_URL}${path}`} />;
+                                    }
+                                    return (
+                                        <div className="w-32 h-32 rounded-xl border bg-muted flex items-center justify-center overflow-hidden">
+                                            <img src={`${BASE_URL}${path}`} alt={viewItem.category} className="w-full h-full object-contain" onError={(e) => { e.target.src = 'https://placehold.co/200x200?text=Gift'; }} />
+                                        </div>
+                                    );
+                                })()}
+                            </div>
+                            {/* Details */}
+                            <div className="grid grid-cols-2 gap-3 text-sm">
+                                <div className="space-y-1">
+                                    <p className="text-muted-foreground font-medium">ID</p>
+                                    <p className="font-mono">{viewItem.id}</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-muted-foreground font-medium">Category</p>
+                                    <p className="font-medium">{viewItem.category}</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-muted-foreground font-medium">Cost</p>
+                                    <p className="font-mono">{viewItem.cost}</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-muted-foreground font-medium">Status</p>
+                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${
+                                        viewItem.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
+                                    }`}>
+                                        {viewItem.status ? 'Active' : 'Inactive'}
+                                    </span>
+                                </div>
+
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsViewOpen(false)}>Close</Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 
