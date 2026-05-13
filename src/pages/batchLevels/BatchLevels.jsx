@@ -13,14 +13,13 @@ import { Label } from "@/components/ui/label";
 import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Trash, Loader2, RefreshCw, ImageIcon, Layers } from "lucide-react";
+import { Plus, Pencil, Trash, Loader2, RefreshCw, Layers } from "lucide-react";
 import { toast } from 'sonner';
 import { batchLevelService } from '@/services';
-import ImageCropper from '@/components/common/ImageCropper';
 
 const API_BASE = import.meta.env.VITE_API_BANNER_URL || import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://api.pololive.cloud';
 
-const LEVEL_TYPES = ['recharge level', 'user lavel'];
+const LEVEL_TYPES = ['recharge level', 'user lavel', 'party level'];
 const BATCH_TYPES = ['recharge batch', 'user_batch'];
 
 const defaultForm = { type: 'level', level_type: '', level: '', batch_type: '', batch: '', status: true };
@@ -55,7 +54,7 @@ const BatchLevels = () => {
     const handleAdd = async (e) => {
         e.preventDefault();
         if (!addImage) { toast.error('Image is required'); return; }
-        if (addForm.type === 'level' && !addForm.level_type) { toast.error('Level Type is required'); return; }
+        if ((addForm.type === 'level' || addForm.type === 'partylevel') && !addForm.level_type) { toast.error('Level Type is required'); return; }
         if (addForm.type === 'Batches' && !addForm.batch_type) { toast.error('Batch Type is required'); return; }
         try {
             setSubmitting(true);
@@ -88,7 +87,7 @@ const BatchLevels = () => {
 
     const handleEdit = async (e) => {
         e.preventDefault();
-        if (editForm.type === 'level' && !editForm.level_type) { toast.error('Level Type is required'); return; }
+        if ((editForm.type === 'level' || editForm.type === 'partylevel') && !editForm.level_type) { toast.error('Level Type is required'); return; }
         if (editForm.type === 'Batches' && !editForm.batch_type) { toast.error('Batch Type is required'); return; }
         try {
             setSubmitting(true);
@@ -154,15 +153,19 @@ const BatchLevels = () => {
         {
             accessorKey: 'type',
             header: 'Type',
-            cell: ({ row }) => (
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                    row.original.type === 'level'
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'bg-purple-100 text-purple-700'
-                }`}>
-                    {row.original.type}
-                </span>
-            ),
+            cell: ({ row }) => {
+                const type = row.original.type;
+                const colorMap = {
+                    level: 'bg-blue-100 text-blue-700',
+                    Batches: 'bg-purple-100 text-purple-700',
+                    partylevel: 'bg-orange-100 text-orange-700',
+                };
+                return (
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${colorMap[type] || 'bg-gray-100 text-gray-700'}`}>
+                        {type}
+                    </span>
+                );
+            },
         },
         {
             accessorKey: 'level_type',
@@ -258,7 +261,7 @@ const BatchLevels = () => {
                     </DialogHeader>
                     <form onSubmit={handleAdd}>
                         <div className="grid gap-4 py-4">
-                            <BatchLevelFormFields form={addForm} setForm={setAddForm} image={addImage} setImage={setAddImage} existingImg={null} />
+                            <BatchLevelFormFields form={addForm} setForm={setAddForm} image={addImage} setImage={setAddImage} existingImg={null} isAdd />
                         </div>
                         <DialogFooter>
                             <Button type="button" variant="outline" onClick={() => setIsAddOpen(false)} disabled={submitting}>Cancel</Button>
@@ -319,7 +322,7 @@ const BatchLevels = () => {
     );
 };
 
-const BatchLevelFormFields = ({ form, setForm, image, setImage, existingImg }) => {
+const BatchLevelFormFields = ({ form, setForm, image, setImage, existingImg, isAdd }) => {
     const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
 
     return (
@@ -333,13 +336,14 @@ const BatchLevelFormFields = ({ form, setForm, image, setImage, existingImg }) =
                         <SelectContent>
                             <SelectItem value="level">Level</SelectItem>
                             <SelectItem value="Batches">Batches</SelectItem>
+                            <SelectItem value="partylevel">Party Level</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
             </div>
 
-            {/* Level fields */}
-            {form.type === 'level' && (
+            {/* Level / PartyLevel fields */}
+            {(form.type === 'level' || form.type === 'partylevel') && (
                 <>
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label className="text-right">Level Type</Label>
@@ -347,7 +351,10 @@ const BatchLevelFormFields = ({ form, setForm, image, setImage, existingImg }) =
                             <Select value={form.level_type} onValueChange={(v) => set('level_type', v)}>
                                 <SelectTrigger><SelectValue placeholder="Select level type" /></SelectTrigger>
                                 <SelectContent>
-                                    {LEVEL_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                                    {form.type === 'partylevel'
+                                        ? <SelectItem value="party level">party level</SelectItem>
+                                        : LEVEL_TYPES.filter(t => t !== 'party level').map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)
+                                    }
                                 </SelectContent>
                             </Select>
                         </div>
@@ -384,36 +391,24 @@ const BatchLevelFormFields = ({ form, setForm, image, setImage, existingImg }) =
             <div className="grid grid-cols-4 items-start gap-4">
                 <Label className="text-right pt-2">Image</Label>
                 <div className="col-span-3 space-y-2">
-                    <ImageCropper aspect={1} onCropped={(file) => setImage(file)}>
-                        <div className={`w-full h-32 rounded-md border-2 border-dashed flex flex-col items-center justify-center gap-1 transition-colors overflow-hidden cursor-pointer ${
-                            image ? 'border-primary' : 'border-muted-foreground/30 hover:border-primary'
-                        }`}>
-                            {image ? (
+                    {(image || existingImg) && (
+                        <div className="flex justify-center">
+                            <div className="w-24 h-24 rounded-lg border overflow-hidden bg-muted flex items-center justify-center">
                                 <img
-                                    src={URL.createObjectURL(image)}
+                                    src={image ? URL.createObjectURL(image) : existingImg}
                                     className="w-full h-full object-contain p-1"
                                     alt="preview"
+                                    onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.style.display = 'none'; }}
                                 />
-                            ) : existingImg ? (
-                                <div className="relative w-full h-full group">
-                                    <img
-                                        src={existingImg}
-                                        className="w-full h-full object-contain p-1"
-                                        alt="current"
-                                        onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.style.display = 'none'; }}
-                                    />
-                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                        <span className="text-white text-xs font-medium">Click to replace</span>
-                                    </div>
-                                </div>
-                            ) : (
-                                <>
-                                    <ImageIcon className="h-6 w-6 text-muted-foreground" />
-                                    <span className="text-xs text-muted-foreground">Click to select &amp; crop</span>
-                                </>
-                            )}
+                            </div>
                         </div>
-                    </ImageCropper>
+                    )}
+                    <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setImage(e.target.files?.[0] || null)}
+                        required={isAdd && !image}
+                    />
                     {image && (
                         <button type="button" onClick={() => setImage(null)} className="text-xs text-destructive hover:underline">
                             {existingImg ? 'Revert to original' : 'Remove image'}

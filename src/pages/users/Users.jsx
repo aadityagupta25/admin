@@ -464,7 +464,7 @@ const Users = () => {
 
             {/* Transaction History Dialog */}
             <Dialog open={isTxOpen} onOpenChange={setIsTxOpen}>
-                <DialogContent className="!max-w-4xl w-full max-h-[85vh] flex flex-col overflow-hidden">
+                <DialogContent className="max-w-6xl w-[95vw] max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>Transaction History</DialogTitle>
                         <DialogDescription>
@@ -476,7 +476,7 @@ const Users = () => {
                             <Loader2 className="h-6 w-6 animate-spin text-primary" />
                         </div>
                     ) : (
-                        <div className="flex-1 overflow-auto">
+                        <div className="overflow-x-auto">
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="border-b bg-muted/50">

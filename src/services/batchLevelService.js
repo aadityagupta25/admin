@@ -28,7 +28,7 @@ export const batchLevelService = {
     create: async (data) => {
         const formData = new FormData();
         formData.append('type', data.type);
-        if (data.type === 'level') {
+        if (data.type === 'level' || data.type === 'partylevel') {
             formData.append('level_type', data.level_type);
             formData.append('level', data.level);
         } else {
@@ -43,7 +43,7 @@ export const batchLevelService = {
     update: async (id, data) => {
         const formData = new FormData();
         if (data.type) formData.append('type', data.type);
-        if (data.type === 'level') {
+        if (data.type === 'level' || data.type === 'partylevel') {
             if (data.level_type) formData.append('level_type', data.level_type);
             if (data.level) formData.append('level', data.level);
         } else if (data.type === 'Batches') {
